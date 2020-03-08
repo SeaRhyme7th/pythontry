@@ -2,7 +2,7 @@ import requests
 import io
 import sys
 from bs4 import BeautifulSoup
-
+import requests
 
 # sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
@@ -33,6 +33,25 @@ for cssTag in cssList:
     temp = cssTag.attrs
     if 'link' in temp.keys():
         hrefList.append(temp['link']);
+
+
+# start our request for these resource
+for urlList in hrefList:
+    # 先解析下应该保存的文件的名字
+    res = requests.get(url)
+    if res.status_code == 200 :
+        resourceTxt = res.text
+        if '?' in url :
+            # 暂时不知道咋搞
+            fileName = 'tmp';
+        else :
+            splitUrl = url.split('/', -1);
+            fileName = splitUrl.pop
+        resourceFile = file.open(fileName, 'w');
+        print(resourceTxt, resourceFile);
+        resourceFile.close());
+
+
 # print(alist[0]);
 # print(alist[0].attrs);
 

@@ -7,14 +7,7 @@ import requests
 # sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-# r = requests.get("https://www.baidu.com");
-# print(r.status_code)
-# webHtml = r.text
-## 先直接从本地获取
-# file = open('./test.html', 'r');
-# webHtml = file.read()
-# print(webHtml)
-curlUrl = 'https://www.huya.com/688';
+curlUrl = 'http://vis-free.10jqka.com.cn/billboard/indexV3.html#/index';
 allContent = requests.get(curlUrl);
 webHtml = allContent.text;
 
@@ -34,28 +27,44 @@ for cssTag in cssList:
         hrefList.append(temp['href']);
 
 
-### 可以先将需要存储的js和css的资源存放到当前的目录中
-
 staticResourceFileName = "./tmp.txt";
 staticResourceFile = open(staticResourceFileName, "w");
 
 # start our request for these resource
+filePath = {};
+requestList = [];
 for urlList in hrefList:
     staticResourceFile.write(urlList + "\n")
-    # 先解析下应该保存的文件的名字
+    # print(urlList.split("//", -1));
+    urlParts = urlList.split("//", -1)
+    if len(urlParts[0]) == 0 :
+        urlList = "http:" + urlList
+    # print(urlList)
     res = requests.get(urlList)
     if res.status_code == 200 :
+        # print(urlList)
         resourceTxt = res.text
         if '?' in urlList :
-            # 暂时不知道咋搞
+            #http://s.thsi.cn/cb?/js/common/cefapi/1.5.4/cefApi.min.js;/js/common/b2c/ta/ta.min.js;/js/jsmodule/acme/1.1/acme.js;/js/datav/charts/0.4.15/d3_charts.js
+            splitUrlList = urlList.split('?', -1);
+            for partUrl in splitUrlList[1].split(";", -1):
+                noHttpProtocol = splitUrlList[0].split("//", -1);# 去掉//以及协议头
+                others = noHttpProtocol[1].split('/', -1);
+                domain = noHttpProtocol[0] + "//" + others[0];
+                completeUrl = domain + partUrl
+                # find path in linux
+                if "s.thsi.cn" in domain:
+                    filePath[completeUrl] = "/var/www/s/html" + partUrl
+                if "i.this.cn" in domain:
+                    filePath[completeUrl] = "/var/www/i/html" + partUrl
+                requestList.append(completeUrl)
+                # print(completeUrl + "\n")
+            # don't know how to do
             fileName = 'tmp';
         else :
-            splitUrl = urlList.split('/', -1);
-            if len(splitUrl) > 0 :
-                data = requests.get(urlList)
-                fileName = splitUrl[-1]
-                resourceFile = open(fileName, 'w');
-                resourceFile.write(data.text)
+            requestList.append(urlList);
+            continue;
+
             # fileName = splitUrl.pop
             # print(fileName)
         # resourceFile = open(fileName, 'w');
@@ -63,6 +72,18 @@ for urlList in hrefList:
         # resourceFile.close();
 staticResourceFile.close();
 
+## write to file
+for sourceUrl in requestList:
+    res = requests.get(sourceUrl)
+    if res.status_code == 200:
+            splitUrl = sourceUrl.split('/', -1);
+            if len(splitUrl) > 0 :
+                fileName = "./tmp/" + splitUrl[-1]
+                print(fileName)
+                resourceFile = open(fileName, 'w');
+                resourceFile.write(res.text)
+print(requestList)
+print(filePath)
 # print(alist[0]);
 # print(alist[0].attrs);
 
@@ -72,7 +93,7 @@ staticResourceFile.close();
     # print(b['href'])
     # asoup = BeautifulSoup(a, 'lxml');
     # print(a.href)
-print(hrefList);
+# print(hrefList);
 # allScript = parseHtmlSoup.find_all('script')
 # for scriptHtml in allScript:
 #     print(scriptHtml)
